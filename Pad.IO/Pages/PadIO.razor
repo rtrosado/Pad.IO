@@ -2,6 +2,13 @@
 
 <PageTitle>Draw</PageTitle>
 
+<img 
+    src="svg/apple.svg"
+    style="display: none"
+    @onload="AppleSvgLoaded" 
+    @ref="_appleIconReference" 
+/>
+
 <div class="canvasWrapper"
      style="width: @_wrapperDims.Item1; height: @_wrapperDims.Item2"
      @onclick="CanvasLeftClick">

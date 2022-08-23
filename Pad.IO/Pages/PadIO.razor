@@ -1,3 +1,14 @@
 ﻿@page "/draw"
 
-<BECanvas Width="300" Height="400" @ref="_canvasReference"></BECanvas>
+<PageTitle>Draw</PageTitle>
+
+<div class="canvasWrapper"
+     style="width: @_wrapperDims.Item1; height: @_wrapperDims.Item2"
+     @onclick="CanvasLeftClick">
+    <BECanvas Width="@_canvasDims.Item1" Height="@_canvasDims.Item2" @ref="_canvasReference"></BECanvas>
+</div>
+
+<div class="canvasConsole"
+     style="">
+    <span>@_debug</span>
+</div>

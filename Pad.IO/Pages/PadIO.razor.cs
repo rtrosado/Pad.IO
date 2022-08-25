@@ -6,9 +6,14 @@ namespace Pad.IO.Pages
     using Blazor.Extensions.Canvas.Canvas2D;
     using Microsoft.AspNetCore.Components;
     using Microsoft.AspNetCore.Components.Web;
+    using Microsoft.JSInterop;
+    using System;
 
     public partial class PadIO
     {
+        [Inject]
+        IJSRuntime JSRuntime { get; set; }
+
         private double canvasScale = 4.0;
 
         private Tuple<string, string> _wrapperDims;
@@ -25,6 +30,8 @@ namespace Pad.IO.Pages
         private ElementReference _appleIconReference;
         private Tuple<string, string> _appleSvgDims;
 
+        private bool appleSvgLoaded = false;
+
         protected override async Task OnInitializedAsync()
         {
             _canvasDims = new Tuple<long, long>((long)(210 * canvasScale), (long)(297 * canvasScale));
@@ -37,21 +44,35 @@ namespace Pad.IO.Pages
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
-            if (firstRender)
-            {
-                this._context = await this._canvasReference.CreateCanvas2DAsync();
+            if (!firstRender)
+                return;
 
-                Draw(Welcome());
-            }
+            this._context = await this._canvasReference.CreateCanvas2DAsync();
+            await JSRuntime.InvokeAsync<object>("loop", DotNetObjectReference.Create(this));
+
+            // Draw(Welcome());
         }
 
-        protected List<Func<Task>> Welcome()
+        [JSInvokable]
+        public async ValueTask MainLoop(float timeStamp)
+        {
+            Draw(Welcome(timeStamp));
+        }
+
+        protected List<Func<Task>> Welcome(float timeStamp)
         {
             var actions = new List<Func<Task>>();
+
+            if (appleSvgLoaded)
+            {
+                actions.Add(async () => await _context.DrawImageAsync(_appleIconReference, 200 + timeStamp / 100, 200, 25, 25));
+                actions.Add(async () => await _context.StrokeAsync());
+            }
+
             actions.Add(async () => await _context.RectAsync(0, 0, _canvasDims.Item1, _canvasDims.Item2));
             actions.Add(async () => await _context.StrokeAsync());
             actions.Add(async () => await _context.SetFontAsync("bold 18px monospace"));
-            actions.Add(async () => await _context.FillTextAsync("Hello, this is Pad.IO Editor!!!", 50, 100));
+            actions.Add(async () => await _context.FillTextAsync($"Hello, this is Pad.IO Editor!!! {timeStamp}", 50, 100));
             return Reset(actions);
         }
 
@@ -76,12 +97,6 @@ namespace Pad.IO.Pages
             _debug = $"Click on {this._position.Item1}x, {this._position.Item2}y";
         }
 
-        private void AppleSvgLoaded() 
-        {
-            var actions = new List<Func<Task>>();
-            actions.Add(async () => await _context.DrawImageAsync(_appleIconReference, 200, 200, 25, 25));
-            actions.Add(async () => await _context.StrokeAsync());
-            Draw(actions);
-        }
+        private void AppleSvgLoaded() => appleSvgLoaded = true;
     }
 }

@@ -8,6 +8,7 @@ namespace Pad.IO.Pages
     using Microsoft.AspNetCore.Components.Web;
     using Microsoft.JSInterop;
     using System;
+    using System.Diagnostics;
 
     public partial class PadIO
     {
@@ -19,27 +20,56 @@ namespace Pad.IO.Pages
         private Tuple<string, string> _wrapperDims;
         private Tuple<long, long> _canvasDims;
 
-        private string _debug;
-
-        private Tuple<double, double> _position =
-            new Tuple<double, double>(0.0, 0.0);
-
         private Canvas2DContext _context;
         private BECanvasComponent _canvasReference;
 
-        private ElementReference _appleIconReference;
-        private Tuple<string, string> _appleSvgDims;
+        private class RenderTempo
+        {
+            public float thisRenderTime { get; set; }
+            public float lastRenderTime { get; set; }
+            public float lapseRenderTime { get; set; }
+            public Stopwatch stopwatch { get; set; }
+            public float framerate { get; set; }
+            public int frameCount { get; set; }
+        }
+        private RenderTempo _renderTempo { get; set; }
 
-        private bool appleSvgLoaded = false;
+        private class AppleSvgState
+        {
+            public ElementReference reference { get; set; }
+            public Tuple<string, string> dims { get; set; }
+            public bool isLoaded { get; set; }
+        }
+        private AppleSvgState _appleSvgState { get; set; }
+
+        private class MouseState
+        {
+            public Tuple<double, double> leftMouseClickPosition { get; set; }
+            public bool wasLeftMouseClicked = false;
+        }
+        private MouseState _mouseState { get; set; }
+
 
         protected override async Task OnInitializedAsync()
         {
             _canvasDims = new Tuple<long, long>((long)(210 * canvasScale), (long)(297 * canvasScale));
             _wrapperDims = new Tuple<string, string>($"{_canvasDims.Item1}px", $"{_canvasDims.Item2}px");
 
-            _appleSvgDims = new Tuple<string, string>($"{25}px", $"{25}px");
+            _renderTempo = new RenderTempo();
+            _renderTempo.stopwatch = Stopwatch.StartNew();
+            _renderTempo.lastRenderTime = _renderTempo.stopwatch.ElapsedTicks;
+            _renderTempo.thisRenderTime = _renderTempo.stopwatch.ElapsedTicks;
+            _renderTempo.lapseRenderTime = _renderTempo.thisRenderTime - _renderTempo.lastRenderTime;
+            _renderTempo.framerate = 1.0f / 60.0f * Stopwatch.Frequency;
+            _renderTempo.frameCount = 0;
 
-            _debug = $"Initializing...";
+            _appleSvgState = new AppleSvgState();
+            _appleSvgState.dims = new Tuple<string, string>($"{25}px", $"{25}px");
+            _appleSvgState.isLoaded = false;
+
+            _mouseState = new MouseState();
+            _mouseState.leftMouseClickPosition = new Tuple<double, double>(0, 0);
+            _mouseState.wasLeftMouseClicked = false;
         }
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -48,32 +78,41 @@ namespace Pad.IO.Pages
                 return;
 
             this._context = await this._canvasReference.CreateCanvas2DAsync();
-            await JSRuntime.InvokeAsync<object>("loop", DotNetObjectReference.Create(this));
 
-            // Draw(Welcome());
+            await JSRuntime.InvokeAsync<object>("loop", DotNetObjectReference.Create(this));
         }
 
         [JSInvokable]
         public async ValueTask MainLoop(float timeStamp)
         {
-            Draw(Welcome(timeStamp));
-        }
+            _renderTempo.thisRenderTime = _renderTempo.stopwatch.ElapsedTicks;
+            _renderTempo.lapseRenderTime = _renderTempo.thisRenderTime - _renderTempo.lastRenderTime;
+            _renderTempo.frameCount++;
 
-        protected List<Func<Task>> Welcome(float timeStamp)
-        {
-            var actions = new List<Func<Task>>();
+            while (_renderTempo.lapseRenderTime / _renderTempo.framerate <= 1)
+                _renderTempo.lapseRenderTime = _renderTempo.stopwatch.ElapsedTicks - _renderTempo.lastRenderTime;
 
-            if (appleSvgLoaded)
+            if (_appleSvgState.isLoaded)
             {
-                actions.Add(async () => await _context.DrawImageAsync(_appleIconReference, 200 + timeStamp / 100, 200, 25, 25));
-                actions.Add(async () => await _context.StrokeAsync());
+                Draw(Welcome($"{_renderTempo.frameCount}", _renderTempo.frameCount));
             }
 
+            _renderTempo.lastRenderTime = _renderTempo.thisRenderTime;
+        }
+
+        protected List<Func<Task>> Welcome(string message, int frameCount)
+        {
+            // TODO --> SEND THIS AS BATCH
+
+            var actions = new List<Func<Task>>();
+            actions.Add(async () => await _context.DrawImageAsync(_appleSvgState.reference, 200, 200, 25, 25));
+            actions.Add(async () => await _context.StrokeAsync());
             actions.Add(async () => await _context.RectAsync(0, 0, _canvasDims.Item1, _canvasDims.Item2));
             actions.Add(async () => await _context.StrokeAsync());
             actions.Add(async () => await _context.SetFontAsync("bold 18px monospace"));
-            actions.Add(async () => await _context.FillTextAsync($"Hello, this is Pad.IO Editor!!! {timeStamp}", 50, 100));
-            return Reset(actions);
+            actions.Add(async () => await _context.FillTextAsync($"{message}", 50, 100 + frameCount * 10));
+
+            return actions;
         }
 
         protected async void Draw(List<Func<Task>> actions)
@@ -91,12 +130,12 @@ namespace Pad.IO.Pages
             return reset;
         }
 
-        protected async void CanvasLeftClick(MouseEventArgs e)
+        protected void CanvasLeftClick(MouseEventArgs e)
         {
-            this._position = new Tuple<double, double>(e.OffsetX, e.OffsetY);
-            _debug = $"Click on {this._position.Item1}x, {this._position.Item2}y";
-        }
+            _mouseState.wasLeftMouseClicked = true;
+            _mouseState.leftMouseClickPosition = new Tuple<double, double> (e.OffsetX, e.OffsetY);
+        } 
 
-        private void AppleSvgLoaded() => appleSvgLoaded = true;
+        private void AppleSvgLoaded() => _appleSvgState.isLoaded = true;
     }
 }

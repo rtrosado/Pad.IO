@@ -8,6 +8,9 @@
 
 <div class="canvasWrapper"
      style="width: @_wrapperDims.Item1; height: @_wrapperDims.Item2"
-     @onclick="CanvasLeftClick">
+     tabindex="0"
+     @onkeydown="CanvasKeyEvent"
+     @onclick="CanvasLeftClick"
+     @ref="_wrapperReference">
     <BECanvas Width="@_canvasDims.Item1" Height="@_canvasDims.Item2" @ref="_canvasReference"></BECanvas>
 </div>

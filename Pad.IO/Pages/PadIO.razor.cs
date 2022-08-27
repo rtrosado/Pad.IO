@@ -22,6 +22,7 @@ namespace Pad.IO.Pages
 
         private Canvas2DContext _context;
         private BECanvasComponent _canvasReference;
+        private ElementReference _wrapperReference;
 
         private class RenderTempo
         {
@@ -49,6 +50,15 @@ namespace Pad.IO.Pages
         }
         private MouseState _mouseState { get; set; }
 
+        private class KeyboardState
+        {
+            public string keyPressed { get; set; }
+            public bool wasAnyKeyPressed { get; set; }
+        }
+        private KeyboardState _keyboardState { get; set; }
+
+        private string message { get; set; }
+
 
         protected override async Task OnInitializedAsync()
         {
@@ -60,7 +70,7 @@ namespace Pad.IO.Pages
             _renderTempo.lastRenderTime = _renderTempo.stopwatch.ElapsedTicks;
             _renderTempo.thisRenderTime = _renderTempo.stopwatch.ElapsedTicks;
             _renderTempo.lapseRenderTime = _renderTempo.thisRenderTime - _renderTempo.lastRenderTime;
-            _renderTempo.framerate = 1.0f / 60.0f * Stopwatch.Frequency;
+            _renderTempo.framerate = 1.0f / 62.5f * Stopwatch.Frequency;
             _renderTempo.frameCount = 0;
 
             _appleSvgState = new AppleSvgState();
@@ -70,6 +80,12 @@ namespace Pad.IO.Pages
             _mouseState = new MouseState();
             _mouseState.leftMouseClickPosition = new Tuple<double, double>(0, 0);
             _mouseState.wasLeftMouseClicked = false;
+
+            _keyboardState = new KeyboardState();
+            _keyboardState.keyPressed = null;
+            _keyboardState.wasAnyKeyPressed = false;
+
+            message = ">>";
         }
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -78,6 +94,7 @@ namespace Pad.IO.Pages
                 return;
 
             this._context = await this._canvasReference.CreateCanvas2DAsync();
+            await _wrapperReference.FocusAsync();
 
             await JSRuntime.InvokeAsync<object>("loop", DotNetObjectReference.Create(this));
         }
@@ -86,21 +103,33 @@ namespace Pad.IO.Pages
         public async ValueTask MainLoop(float timeStamp)
         {
             _renderTempo.thisRenderTime = _renderTempo.stopwatch.ElapsedTicks;
-            _renderTempo.lapseRenderTime = _renderTempo.thisRenderTime - _renderTempo.lastRenderTime;
             _renderTempo.frameCount++;
 
-            while (_renderTempo.lapseRenderTime / _renderTempo.framerate <= 1)
-                _renderTempo.lapseRenderTime = _renderTempo.stopwatch.ElapsedTicks - _renderTempo.lastRenderTime;
+            if (_mouseState.wasLeftMouseClicked)
+            {
+                // this.message += _mouseState.leftMouseClickPosition;
+                _mouseState.wasLeftMouseClicked = false;
+            }
+
+            if (_keyboardState.wasAnyKeyPressed)
+            {
+                this.message += _keyboardState.keyPressed;
+                _keyboardState.wasAnyKeyPressed = false;
+            }
 
             if (_appleSvgState.isLoaded)
             {
-                Draw(Welcome($"{_renderTempo.frameCount}", _renderTempo.frameCount));
+                Draw(Welcome());
             }
+
+            _renderTempo.lapseRenderTime = _renderTempo.stopwatch.ElapsedTicks - _renderTempo.thisRenderTime;
+            while (_renderTempo.lapseRenderTime / _renderTempo.framerate < 1)
+                _renderTempo.lapseRenderTime = _renderTempo.stopwatch.ElapsedTicks - _renderTempo.thisRenderTime;
 
             _renderTempo.lastRenderTime = _renderTempo.thisRenderTime;
         }
 
-        protected List<Func<Task>> Welcome(string message, int frameCount)
+        protected List<Func<Task>> Welcome()
         {
             // TODO --> SEND THIS AS BATCH
 
@@ -109,15 +138,19 @@ namespace Pad.IO.Pages
             actions.Add(async () => await _context.StrokeAsync());
             actions.Add(async () => await _context.RectAsync(0, 0, _canvasDims.Item1, _canvasDims.Item2));
             actions.Add(async () => await _context.StrokeAsync());
-            actions.Add(async () => await _context.SetFontAsync("bold 18px monospace"));
-            actions.Add(async () => await _context.FillTextAsync($"{message}", 50, 100 + frameCount * 10));
+            actions.Add(async () => await _context.SetFontAsync("bold 16px monospace"));
+            actions.Add(async () => await _context.FillTextAsync($"Hello, this is PadIO Editor", 50, 100));
+            actions.Add(async () => await _context.FillTextAsync(((int)(1 / (((_renderTempo.thisRenderTime - _renderTempo.lastRenderTime) / Stopwatch.Frequency)))).ToString(), 50, 120));
+            actions.Add(async () => await _context.FillTextAsync(this.message, 50, 140));
 
-            return actions;
+            return Reset(actions);
         }
 
         protected async void Draw(List<Func<Task>> actions)
         {
+            await this._context.BeginBatchAsync();
             foreach (var action in actions) await action();
+            await this._context.EndBatchAsync();
         }
 
         protected List<Func<Task>> Reset(List<Func<Task>> tasks)
@@ -134,7 +167,13 @@ namespace Pad.IO.Pages
         {
             _mouseState.wasLeftMouseClicked = true;
             _mouseState.leftMouseClickPosition = new Tuple<double, double> (e.OffsetX, e.OffsetY);
-        } 
+        }
+
+        protected void CanvasKeyEvent(KeyboardEventArgs args)
+        {
+            _keyboardState.keyPressed = args.Key;
+            _keyboardState.wasAnyKeyPressed = true;
+        }
 
         private void AppleSvgLoaded() => _appleSvgState.isLoaded = true;
     }

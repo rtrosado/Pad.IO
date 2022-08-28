@@ -3,9 +3,10 @@
 #nullable disable
     public partial class PadIO
     {
-        string ParentStateHandler;
-
-        public void AMethod(string option) =>
-            ParentStateHandler = option;
+        public Content Message { get; set; } = new PadIO.Content();
+        public class Content 
+        {
+            public string Command { get; set; }
+        }
     }
 }

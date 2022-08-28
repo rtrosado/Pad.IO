@@ -1,2 +1,5 @@
-﻿<PadMenu AMenuEvent="(e)=>AMethod(e)"></PadMenu>
-<PadCanvas _stateMenu=@ParentStateHandler></PadCanvas>
+﻿<EditForm Model="Message">
+    <PadMenu @bind-send="Message.Command"></PadMenu>
+    <PadCanvas @bind-receive="Message.Command"></PadCanvas>
+</EditForm>
+

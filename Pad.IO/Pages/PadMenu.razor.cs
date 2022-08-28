@@ -5,12 +5,10 @@ namespace Pad.IO.Pages
 {
     public partial class PadMenu
     {
-        [Parameter] 
-        public EventCallback<string> AMenuEvent { get; set; }
+        [Parameter] public string send { get; set; }
+        [Parameter] public EventCallback<string> sendChanged { get; set; }
 
-        public void PadStateMenu(MouseEventArgs e)
-        {
-            AMenuEvent.InvokeAsync("clear");
-        }
+        async void doClear() =>
+            await sendChanged.InvokeAsync("clear");
     }
 }

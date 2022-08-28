@@ -12,22 +12,20 @@ namespace Pad.IO.Pages
 
     public partial class PadCanvas
     {
-        [Inject]
-        IJSRuntime JSRuntime { get; set; }
+        [Inject] IJSRuntime JSRuntime { get; set; }
+        [Parameter] public string receive { get; set; }
+        [Parameter] public EventCallback<string> receiveChanged { get; set; }
 
-        [Parameter] 
-        public string _stateMenu { get; set; }
+        protected double canvasScale = 4.0;
 
-        private double canvasScale = 4.0;
+        protected Tuple<string, string> _wrapperDims;
+        protected Tuple<long, long> _canvasDims;
 
-        private Tuple<string, string> _wrapperDims;
-        private Tuple<long, long> _canvasDims;
+        protected Canvas2DContext _context;
+        protected BECanvasComponent _canvasReference;
+        protected ElementReference _wrapperReference;
 
-        private Canvas2DContext _context;
-        private BECanvasComponent _canvasReference;
-        private ElementReference _wrapperReference;
-
-        private class RenderTempo
+        protected class RenderTempo
         {
             public float thisRenderTime { get; set; }
             public float lastRenderTime { get; set; }
@@ -36,39 +34,36 @@ namespace Pad.IO.Pages
             public float framerate { get; set; }
             public int frameCount { get; set; }
         }
-        private RenderTempo _renderTempo { get; set; }
+        protected RenderTempo _renderTempo { get; set; }
 
-        private class AppleSvgState
+        protected class AppleSvgState
         {
             public ElementReference reference { get; set; }
             public Tuple<string, string> dims { get; set; }
             public bool isLoaded { get; set; }
         }
-        private AppleSvgState _appleSvgState { get; set; }
+        protected AppleSvgState _appleSvgState { get; set; }
 
-        private class MouseState
+        protected class MouseState
         {
             public Tuple<double, double> leftMouseClickPosition { get; set; }
             public bool wasLeftMouseClicked = false;
         }
-        private MouseState _mouseState { get; set; }
+        protected MouseState _mouseState { get; set; }
 
-        private class KeyboardState
+        protected class KeyboardState
         {
             public string keyPressed { get; set; }
             public bool wasAnyKeyPressed { get; set; }
         }
-        private KeyboardState _keyboardState { get; set; }
+        protected KeyboardState _keyboardState { get; set; }
 
-        private string message { get; set; }
-
+        protected string message { get; set; }
 
         protected override async Task OnInitializedAsync()
         {
             _canvasDims = new Tuple<long, long>((long)(210 * canvasScale), (long)(297 * canvasScale));
             _wrapperDims = new Tuple<string, string>($"{_canvasDims.Item1}px", $"{_canvasDims.Item2}px");
-
-            _stateMenu = "";
 
             _renderTempo = new RenderTempo();
             _renderTempo.stopwatch = Stopwatch.StartNew();
@@ -110,17 +105,15 @@ namespace Pad.IO.Pages
             _renderTempo.thisRenderTime = _renderTempo.stopwatch.ElapsedTicks;
             _renderTempo.frameCount++;
 
-            if (_stateMenu != "")
+            if (receive == "clear")
             {
-                Console.WriteLine("state: " + _stateMenu);
-
                 this.message = ">> ";
-                _stateMenu = "";
+                receive = "";
             }
 
             if (_mouseState.wasLeftMouseClicked)
             {
-                Console.WriteLine("state: " + _stateMenu);
+                Console.WriteLine("state: ");
                 this.message += _mouseState.leftMouseClickPosition;
                 _mouseState.wasLeftMouseClicked = false;
             }
@@ -129,7 +122,7 @@ namespace Pad.IO.Pages
             {
                 this.message += _keyboardState.keyPressed;
                 _keyboardState.wasAnyKeyPressed = false;
-            }         
+            }
 
             if (_appleSvgState.isLoaded)
             {
@@ -142,7 +135,6 @@ namespace Pad.IO.Pages
 
             _renderTempo.lastRenderTime = _renderTempo.thisRenderTime;
         }
-
         protected List<Func<Task>> Welcome()
         {
             // TODO --> SEND THIS AS BATCH
@@ -162,9 +154,20 @@ namespace Pad.IO.Pages
 
         protected async void Draw(List<Func<Task>> actions)
         {
-            await this._context.BeginBatchAsync();
-            foreach (var action in actions) await action();
-            await this._context.EndBatchAsync();
+            try
+            {
+                await this._context.BeginBatchAsync();
+                foreach (var action in actions) await action();
+                await this._context.EndBatchAsync();
+            }
+            catch (Exception ex)
+            {
+                /*
+                 TODO --> TEST IF CANVAS CONTEXT IS ACCESSIBLE, 
+                IF NOT BREAK LOOP AS EARLY AS POSSIBLE, 
+                OR DISPOSE AND CREATE WHEN AVAILABLE
+                 */
+            }
         }
 
         protected List<Func<Task>> Reset(List<Func<Task>> tasks)
@@ -189,6 +192,11 @@ namespace Pad.IO.Pages
             _keyboardState.wasAnyKeyPressed = true;
         }
 
-        private void AppleSvgLoaded() => _appleSvgState.isLoaded = true;
+        protected void AppleSvgLoaded() => _appleSvgState.isLoaded = true;
+
+        public void Dispose()
+        {
+            this.Dispose();
+        }
     }
 }

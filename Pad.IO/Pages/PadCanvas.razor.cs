@@ -2,13 +2,12 @@
 
 namespace Pad.IO.Pages
 {
-    using Blazor.Extensions;
-    using Blazor.Extensions.Canvas.Canvas2D;
     using Microsoft.AspNetCore.Components;
     using Microsoft.JSInterop;
+    using Pad.IO.Canvas;
     using Pad.IO.Handlers;
+    using Pad.IO.Handlers.Events;
     using System;
-    using System.Diagnostics;
 
     public partial class PadCanvas
     {
@@ -16,26 +15,20 @@ namespace Pad.IO.Pages
         [Parameter] public string receive { get; set; }
         [Parameter] public EventCallback<string> receiveChanged { get; set; }
 
-        protected double canvasScale = 4.0;
+        protected string message { get; set; }
 
-        protected Tuple<string, string> _wrapperDims;
-        protected Tuple<long, long> _canvasDims;
-
-        protected Canvas2DContext _context;
-        protected BECanvasComponent _canvasReference;
-        protected ElementReference _wrapperReference;
+        internal Canvas _canvas { get; set; }
+        internal Sketch _sketch { get; set; }
 
         internal Tempo _tempo { get; set; }
         internal Image _image { get; set; }
         internal Mouse _mouse { get; set; }
         internal Keyboard _keyboard { get; set; }
 
-        protected string message { get; set; }
-
         protected override async Task OnInitializedAsync()
         {
-            _canvasDims = new Tuple<long, long>((long)(210 * canvasScale), (long)(297 * canvasScale));
-            _wrapperDims = new Tuple<string, string>($"{_canvasDims.Item1}px", $"{_canvasDims.Item2}px");
+            _canvas = new Canvas(210, 297, 4.0);
+            _sketch = new Sketch(_canvas._canvasDims);
 
             _tempo = new Tempo(62.5f);
             _image = new Image(25, 25);
@@ -50,8 +43,8 @@ namespace Pad.IO.Pages
             if (!firstRender)
                 return;
 
-            this._context = await this._canvasReference.CreateCanvas2DAsync();
-            await _wrapperReference.FocusAsync();
+            await _sketch.setContext(_canvas._canvasReference);
+            await _canvas.setFocus();
 
             await JSRuntime.InvokeAsync<object>("loop", DotNetObjectReference.Create(this));
         }
@@ -64,7 +57,7 @@ namespace Pad.IO.Pages
             if (receive == "clear")
             {
                 this.message = ">> ";
-                await _wrapperReference.FocusAsync();
+                await _canvas._wrapperReference.FocusAsync();
                 receive = "";
             }
 
@@ -83,47 +76,11 @@ namespace Pad.IO.Pages
 
             if (_image.isLoaded)
             {
-                Draw(Welcome());
+                await _sketch.Welcome(_image.reference, _tempo.getActualFramerate(), this.message);
             }
 
             _tempo.waitConstrainFramerateLoop();
             _tempo.stop();
         }
-        protected List<Func<Task>> Welcome()
-        {
-            // TODO --> SEND THIS AS BATCH
-
-            var actions = new List<Func<Task>>();
-            actions.Add(async () => await _context.DrawImageAsync(_image.reference, 200, 200, 25, 25));
-            actions.Add(async () => await _context.StrokeAsync());
-            actions.Add(async () => await _context.RectAsync(0, 0, _canvasDims.Item1, _canvasDims.Item2));
-            actions.Add(async () => await _context.StrokeAsync());
-            actions.Add(async () => await _context.SetFontAsync("bold 16px monospace"));
-            actions.Add(async () => await _context.FillTextAsync($"Hello, this is PadIO Editor", 50, 100));
-            actions.Add(async () => await _context.FillTextAsync(_tempo.getActualFramerate(), 50, 120));
-            actions.Add(async () => await _context.FillTextAsync(this.message, 50, 140));
-
-            return Reset(actions);
-        }
-
-        protected async void Draw(List<Func<Task>> actions)
-        {
-            await this._context.BeginBatchAsync();
-            foreach (var action in actions) await action();
-
-            try { await this._context.EndBatchAsync(); }
-            catch (Exception) { }
-        }
-
-        protected List<Func<Task>> Reset(List<Func<Task>> tasks)
-        {
-            var reset = new List<Func<Task>>();
-            reset.Add(async () => await _context.ClearRectAsync(0, 0, _canvasDims.Item1, _canvasDims.Item2));
-            reset.Add(async () => await _context.BeginPathAsync());
-            foreach (var task in tasks) reset.Add(task);
-
-            return reset;
-        }
-
     }
 }

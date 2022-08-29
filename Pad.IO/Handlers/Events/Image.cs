@@ -1,4 +1,4 @@
-﻿namespace Pad.IO.Handlers
+﻿namespace Pad.IO.Handlers.Events
 {
     using Microsoft.AspNetCore.Components;
     using static System.Net.Mime.MediaTypeNames;
@@ -19,7 +19,7 @@
 
         public string getWidth => $"{25}px";
         public string getHeight => $"{25}px";
-        public void ImageLoaded() => this.isLoaded = true;
+        public void ImageLoaded() => isLoaded = true;
     }
 }
 

@@ -4,11 +4,16 @@
     @onload="_image.ImageLoaded"
     @ref="_image.reference" />
 
-<div class="canvasWrapper"
-     style="width: @_wrapperDims.Item1; height: @_wrapperDims.Item2"
-     tabindex="0"
-     @onkeydown="_keyboard.CanvasEvent"
-     @onclick="_mouse.CanvasLeftClick"
-     @ref="_wrapperReference">
-    <BECanvas Width="@_canvasDims.Item1" Height="@_canvasDims.Item2" @ref="_canvasReference"></BECanvas>
+<div 
+    class="canvasWrapper"
+    style="width: @_canvas.wrapperDimsToString().Item1; height: @_canvas.wrapperDimsToString().Item2"
+    tabindex="0"
+    @onkeydown="_keyboard.CanvasEvent"
+    @onclick="_mouse.CanvasLeftClick"
+    @ref="_canvas._wrapperReference">
+    <BECanvas 
+        Width="@_canvas._canvasDims.width"
+        Height="@_canvas._canvasDims.height"
+        @ref="_canvas._canvasReference">
+    </BECanvas>
 </div>

@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components.Web;
 
-namespace Pad.IO.Handlers
+namespace Pad.IO.Handlers.Events
 {
 #nullable disable
     internal class Keyboard
@@ -14,7 +14,7 @@ namespace Pad.IO.Handlers
             wasAnyKeyPressed = false;
         }
 
-        public void CanvasEvent(KeyboardEventArgs args) => 
+        public void CanvasEvent(KeyboardEventArgs args) =>
             (keyPressed, wasAnyKeyPressed) = (args.Key, true);
     }
 }

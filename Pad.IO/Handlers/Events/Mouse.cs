@@ -1,16 +1,16 @@
 ﻿using Microsoft.AspNetCore.Components.Web;
 
-namespace Pad.IO.Handlers
+namespace Pad.IO.Handlers.Events
 {
 #nullable disable
-    class Coordinates 
+    class Coordinates
     {
         public double x { get; set; }
         public double y { get; set; }
 
         public Coordinates() { }
-        public Coordinates(double _x, double _y) 
-        { 
+        public Coordinates(double _x, double _y)
+        {
             x = _x;
             y = _y;
         }
@@ -27,8 +27,8 @@ namespace Pad.IO.Handlers
             wasLeftMouseClicked = false;
         }
 
-        public void CanvasLeftClick(MouseEventArgs e) => 
-            (wasLeftMouseClicked, leftMouseClickPosition) = 
+        public void CanvasLeftClick(MouseEventArgs e) =>
+            (wasLeftMouseClicked, leftMouseClickPosition) =
                 (true, new Coordinates(e.OffsetX, e.OffsetY));
     }
 }

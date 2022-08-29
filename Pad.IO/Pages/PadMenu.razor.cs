@@ -1,8 +1,7 @@
-﻿using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
-
-namespace Pad.IO.Pages
+﻿namespace Pad.IO.Pages
 {
+    using Microsoft.AspNetCore.Components;
+
     public partial class PadMenu
     {
         [Parameter] public string send { get; set; }

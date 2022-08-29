@@ -1,8 +1,7 @@
 ﻿namespace Pad.IO.Canvas
 {
-    using Blazor.Extensions;
-    using Blazor.Extensions.Canvas;
 #nullable disable
+    using Blazor.Extensions;
 
     using Blazor.Extensions.Canvas.Canvas2D;
     using Microsoft.AspNetCore.Components;
@@ -12,7 +11,7 @@
         public Dimensions _dims;
         
         public Sketch(Dimensions dims) => _dims = dims;
-        public async Task setContext(BECanvasComponent reference) =>
+        public async Task set2DContext(BECanvasComponent reference) =>
             this._context = await reference.CreateCanvas2DAsync();
 
         public async Task<bool> Run(List<Func<Task>> actions)
@@ -25,6 +24,7 @@
 
             return true;
         }
+        
         public async Task<bool> Welcome(ElementReference image, string firstMessage, string secondMessage)
         {
             var actions = new List<Func<Task>>();
@@ -50,6 +50,4 @@
             return reset;
         }
     }
-
-
 }

@@ -1,2 +1,237 @@
-﻿<button @onclick="@doClear">Clear Canvas Inserted Text</button>
+﻿<style type="text/css">
+    *, *:after, *:before {
+        box-sizing: border-box;
+    }
+
+    /* [data-theme="light"] {
+                --color-bg-primary: #d0d6df;
+                --color-bg-primary-offset: #f1f3f7;
+                --color-bg-secondary: #fff;
+                --color-text-primary: #3a3c42;
+                --color-text-primary-offset: #898c94;
+                --color-orange: #FF6347;
+                --color-green: #228B22;
+                --color-purple: #9665c4;
+                --color-black: var(--color-text-primary);
+                --color-red: #d92027;
+                --color-black: #000;
+                --internal-light-dark: #f00;
+            }
+            [data-theme="dark"] {
+              --color-bg-primary: #23272a;
+              --color-bg-primary-offset: #B0B0B0;
+              --color-bg-secondary: #2c2f33;
+              --color-text-primary: #fff;
+              --color-text-primary-offset: #fff;
+              --color-orange: #FF6347;
+              --color-green: #228B22;
+            } */
+
+
+    body {
+        font-family: "Inter", sans-serif;
+        background-color: var(--color-bg-primary);
+        color: var(--color-text-primary);
+        --color-bg-primary: #d0d6df;
+        --color-bg-primary-offset: #f1f3f7;
+        --color-bg-secondary: #fff;
+        --color-text-primary: #3a3c42;
+        --color-text-primary-offset: #898c94;
+        --color-orange: #FF6347;
+        --color-green: #228B22;
+        --color-purple: #9665c4;
+        --color-black: var(--color-text-primary);
+        --color-red: #d92027;
+        --color-black: #000;
+        --internal-light-dark: #f00;
+    }
+
+    .menu {
+        /* display: flex;
+        position: absolute;
+        flex-direction: column;*/
+        background-color: var(--color-bg-secondary);
+        border-radius: 10px;
+        box-shadow: 0 10px 20px rgba(64, 64, 64, 0.15);
+        top: 10;
+        left: 10;
+        width: 208px;
+    }
+
+        .menu.settings {
+            width: 300px !important;
+        }
+
+    .menu-list {
+        margin: 0;
+        display: block;
+        width: 100%;
+        padding: 8px;
+    }
+
+    .menu-list, ul {
+        list-style-type: none;
+    }
+
+        .menu-list + .menu-list {
+            border-top: 1px solid #ddd;
+        }
+
+    .menu-sub-list {
+        display: none;
+        padding: 8px;
+        background-color: var(--color-bg-secondary);
+        border-radius: 10px;
+        box-shadow: 0 10px 20px rgba(64, 64, 64, 0.15);
+        position: absolute;
+        left: 100%;
+        right: 0;
+        z-index: 100;
+        width: 100%;
+        top: 0;
+        flex-direction: column;
+    }
+
+        .menu-sub-list:hover {
+            display: flex;
+        }
+
+    .menu-item {
+        position: relative;
+    }
+
+    .menu-button {
+        font: inherit;
+        color: inherit;
+        outline: none;
+        border: 0;
+        padding: 8px 8px;
+        width: 100%;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        position: relative;
+        background-color: var(--color-bg-secondary);
+    }
+
+        .menu-button:hover {
+            background-color: var(--color-bg-primary-offset);
+        }
+
+            .menu-button:hover + .menu-sub-list {
+                display: flex;
+            }
+
+            .menu-button:hover svg {
+                stroke: var(--color-text-primary);
+            }
+
+                .menu-button:hover svg.fa {
+                    color: var(--color-text-primary);
+                }
+
+    .context-button:hover svg.fa {
+        color: var(--color-text-primary);
+    }
+
+    .menu-button svg {
+        width: 20px;
+        height: 20px;
+        margin-right: 10px;
+        stroke: var(--color-text-primary-offset);
+    }
+
+        .menu-button svg.fa {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            color: var(--color-text-primary-offset);
+        }
+
+    .context-button svg.fa {
+        height: 30px;
+        margin-right: 10px;
+        color: var(--color-text-primary-offset);
+    }
+
+    .menu-button svg:nth-of-type(2) {
+        margin-right: 0;
+        position: absolute;
+        right: 8px;
+    }
+
+    .menu-button span:nth-of-type(2) {
+        margin-right: 0;
+        position: absolute;
+        right: 8px;
+        font-size: x-small;
+    }
+
+    .menu-button span.second {
+        color: var(--color-text-primary-offset);
+        font-size: small;
+        margin-left: 5px;
+    }
+
+    .menu-button.tor span:nth-of-type(1) {
+        color: var(--color-text-primary-offset);
+        font-size: small;
+        margin-left: 5px;
+    }
+</style>
+
+<div>
+    <div class="menu">
+        <ul class="menu-list">
+            <li class="menu-item">
+                <button class="menu-button" @onclick="@doClear">
+                    <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="css-i6dzq1"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    <span>Clear Text</span>
+                </button>
+            </li>
+        </ul>
+
+        <div style="display: none">
+            <ul class="menu-list">
+                <li class="menu-item">
+                    <button class="menu-button">
+                        <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="css-i6dzq1"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                        <span>Reload tab </span>
+                        <span>CTRL+R</span>
+                    </button>
+                </li>
+
+                <li class="menu-item">
+                    <button class="menu-button">
+                        <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="css-i6dzq1"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
+                        <span>Mute tab </span>
+                    </button>
+                </li>
+
+                <li class="menu-item">
+                    <button class="menu-button">
+                        <svg></svg>
+                        <span>Duplicate tab </span>
+                    </button>
+                </li>
+            </ul>
+
+            <ul class="menu-list">
+                <li class="menu-item">
+                    <button class="menu-button">
+                        <svg></svg>
+                        <span>Close tab</span>
+                        <span>CTRL+W</span>
+                    </button>
+                </li>
+                <li class="menu-item">
+                    <button class="menu-button">
+                        <svg></svg>
+                        <span>Close other tabs</span>
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
 <div style="height:15px"></div>

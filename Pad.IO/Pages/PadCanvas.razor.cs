@@ -30,7 +30,7 @@ namespace Pad.IO.Pages
             _canvas = new Canvas(210, 297, 4.0);
             _sketch = new Sketch(_canvas._canvasDims);
 
-            _tempo = new Tempo(62.5f);
+            _tempo = new Tempo(61.5f);
             _image = new Image(25, 25);
             _mouse = new Mouse();
             _keyboard = new Keyboard();
@@ -43,7 +43,7 @@ namespace Pad.IO.Pages
             if (!firstRender)
                 return;
 
-            await _sketch.setContext(_canvas._canvasReference);
+            await _sketch.set2DContext(_canvas._canvasReference);
             await _canvas.setFocus();
 
             await JSRuntime.InvokeAsync<object>("loop", DotNetObjectReference.Create(this));

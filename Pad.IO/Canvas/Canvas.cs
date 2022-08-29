@@ -32,7 +32,9 @@
         }
 
         public Tuple<string, string> wrapperDimsToString() => 
-            new Tuple<string, string>(_wrapperDims.getWidthToString(), _wrapperDims.getHeightToString());
+            new Tuple<string, string>(
+                _wrapperDims.getWidthToString() + "px", 
+                _wrapperDims.getHeightToString() + "px");
 
         public async Task setFocus() =>
             await _wrapperReference.FocusAsync();

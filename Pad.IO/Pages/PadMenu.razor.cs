@@ -3,10 +3,8 @@
 namespace Pad.IO.Pages
 {
     using Microsoft.AspNetCore.Components;
-    using Microsoft.AspNetCore.Components.Web;
     using Pad.IO.Menu;
     using System.Collections.Generic;
-    using static System.Net.Mime.MediaTypeNames;
 
     public partial class PadMenu
     {

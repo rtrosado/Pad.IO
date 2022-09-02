@@ -41,9 +41,6 @@ namespace Pad.IO.Pages
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
-
-            _tempo.start();
-
             if (_keyboard.wasAnyKeyPressed)
             {
                 this.message += _keyboard.keyPressed;
@@ -65,16 +62,18 @@ namespace Pad.IO.Pages
                 return;
             }
 
+            _tempo.start();
+            await Task.Delay(TimeSpan.FromSeconds(1.0 / framerate));
+
             await _sketch.set2DContext(_canvas._canvasReference);
             await _canvas.setFocus();
-
-            await Task.Delay(TimeSpan.FromSeconds(1.0 / framerate));
-            await InvokeAsync(() => this.StateHasChanged());
 
             await _sketch.Welcome(_image.reference, _tempo.getActualFramerate(), this.message);
 
             _tempo.waitConstrainFramerateLoop();
             _tempo.stop();
+
+            await InvokeAsync(() => this.StateHasChanged());
         }
     }
 }

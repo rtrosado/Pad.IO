@@ -3,17 +3,13 @@
 namespace Pad.IO.Pages
 {
     using Microsoft.AspNetCore.Components;
-    using Microsoft.Extensions.Options;
-    using Microsoft.JSInterop;
     using Pad.IO.Canvas;
     using Pad.IO.Handlers;
     using Pad.IO.Handlers.Events;
     using System;
-    using static Pad.IO.Pages.PadIO;
 
     public partial class PadCanvas
     {
-        [Inject] IJSRuntime JSRuntime { get; set; }
         [Parameter] public string receive { get; set; }
         [Parameter] public EventCallback<string> receiveChanged { get; set; }
 

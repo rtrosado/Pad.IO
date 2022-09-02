@@ -21,17 +21,6 @@
     </div>
     <script src="_framework/blazor.webassembly.js"></script>
     <script src="_content/Blazor.Extensions.Canvas/blazor.extensions.canvas.js"></script>
-    <script>
-        function mainLoop(timeStamp) {
-            window.requestAnimationFrame(mainLoop)
-            theInstance.invokeMethodAsync('MainLoop', timeStamp)
-        }
-
-        window.loop = (instance) => {
-            window.theInstance = instance
-            window.requestAnimationFrame(mainLoop)
-        };
-    </script>
 </body>
 
 </html>

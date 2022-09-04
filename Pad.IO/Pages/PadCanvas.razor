@@ -6,7 +6,11 @@
 
 <div 
     class="canvasWrapper"
-    style="width: @_canvas.wrapperDimsToString().Item1; height: @_canvas.wrapperDimsToString().Item2"
+    style="
+        width: @_canvas.wrapperDimsToString().Item1; 
+        height: @_canvas.wrapperDimsToString().Item2;
+        margin-top: 60px;
+        "
     tabindex="0"
     @onkeydown="_keyboard.CanvasEvent"
     @onclick="_mouse.CanvasLeftClick"

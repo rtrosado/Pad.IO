@@ -28,8 +28,9 @@ namespace Pad.IO.Pages
         {
             _canvas = new Canvas(210, 297, 4.0);
             _sketch = new Sketch(_canvas._canvasDims);
+            _sketch.SetMargins(50, 50);
 
-            framerate = 62.0f;
+            framerate = 61.0f;
 
             _tempo = new Tempo(framerate);
             _image = new Image(25, 25);
@@ -41,39 +42,62 @@ namespace Pad.IO.Pages
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
+            if (!(await eventListener())) return;
+
+            await Task.Delay(TimeSpan.FromSeconds(1.0 / (framerate - 20.0)));
+
+            try { await _sketch.Set2DContext(_canvas._canvasReference); }
+            catch (Exception) { return; };
+
+            _tempo.start();
+            await _canvas.setFocus();
+
+            _sketch.Reset();
+            _sketch.Clear();
+            _sketch.DrawPage(6);
+            _sketch.DrawMargins(1);
+
+            double textWidth = await _sketch.DrawText(message, 50, 70);
+
+            _sketch._cursor.offset.left = 50 + (int)textWidth;
+            _sketch._cursor.offset.top = 70;
+            _sketch.Cursor();
+
+            await _sketch.Draw();
+
+            _tempo.waitConstrainFramerateLoop();
+            _tempo.stop();
+
+            await InvokeAsync(() => this.StateHasChanged());
+        }
+
+        protected async Task<bool> eventListener()
+        {
+            bool reRender = true;
+
             if (_keyboard.wasAnyKeyPressed)
             {
-                this.message += _keyboard.keyPressed;
+                string formatKey = _keyboard.keyPressed.Length == 1 ? _keyboard.keyPressed : "";
+
+                this.message += formatKey;
                 _keyboard.wasAnyKeyPressed = false;
-                return;
+                reRender = false;
+            }
+            if (_mouse.wasLeftMouseClicked)
+            {
+                this.message += $"[{_mouse.leftMouseClickPosition.x}x, {_mouse.leftMouseClickPosition.x}y]";
+                _mouse.wasLeftMouseClicked = false;
+                reRender = false;
             }
             if (receive == "clear")
             {
                 this.message = ">> ";
                 await _canvas._wrapperReference.FocusAsync();
                 receive = "";
-                return;
-            }
-            if (_mouse.wasLeftMouseClicked)
-            {
-                Console.WriteLine("state: ");
-                this.message += $"[{_mouse.leftMouseClickPosition.x}x, {_mouse.leftMouseClickPosition.x}y]";
-                _mouse.wasLeftMouseClicked = false;
-                return;
+                reRender = false;
             }
 
-            _tempo.start();
-            await Task.Delay(TimeSpan.FromSeconds(1.0 / framerate));
-
-            await _sketch.set2DContext(_canvas._canvasReference);
-            await _canvas.setFocus();
-
-            await _sketch.Welcome(_image.reference, _tempo.getActualFramerate(), this.message);
-
-            _tempo.waitConstrainFramerateLoop();
-            _tempo.stop();
-
-            await InvokeAsync(() => this.StateHasChanged());
+            return reRender;
         }
     }
 }

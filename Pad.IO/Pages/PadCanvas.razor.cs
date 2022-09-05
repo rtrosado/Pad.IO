@@ -44,12 +44,12 @@ namespace Pad.IO.Pages
         {
             if (!(await eventListener())) return;
 
-            await Task.Delay(TimeSpan.FromSeconds(1.0 / (framerate - 20.0)));
+            _tempo.start();
+            await Task.Delay(TimeSpan.FromSeconds(1.0 / (framerate * 2)));
 
             try { await _sketch.Set2DContext(_canvas._canvasReference); }
             catch (Exception) { return; };
-
-            _tempo.start();
+;
             await _canvas.setFocus();
 
             _sketch.Reset();
@@ -57,6 +57,7 @@ namespace Pad.IO.Pages
             _sketch.DrawPage(6);
             _sketch.DrawMargins(1);
 
+            await _sketch.DrawText(_tempo.getActualFramerate(), 50, 200);
             double textWidth = await _sketch.DrawText(message, 50, 70);
 
             _sketch._cursor.offset.left = 50 + (int)textWidth;

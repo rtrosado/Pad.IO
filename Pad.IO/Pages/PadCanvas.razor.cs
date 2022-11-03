@@ -7,6 +7,7 @@ namespace Pad.IO.Pages
     using Pad.IO.Handlers;
     using Pad.IO.Handlers.Events;
     using System;
+    using System.Diagnostics;
 
     public partial class PadCanvas
     {
@@ -14,12 +15,12 @@ namespace Pad.IO.Pages
         [Parameter] public EventCallback<string> receiveChanged { get; set; }
 
         protected string message { get; set; }
-        protected float framerate { get; set; }
+        protected double framerate { get; set; }
+        protected double measuredFramerate { get; set; } = 0;
 
         internal Canvas _canvas { get; set; }
         internal Sketch _sketch { get; set; }
 
-        internal Tempo _tempo { get; set; }
         internal Image _image { get; set; }
         internal Mouse _mouse { get; set; }
         internal Keyboard _keyboard { get; set; }
@@ -30,9 +31,8 @@ namespace Pad.IO.Pages
             _sketch = new Sketch(_canvas._canvasDims);
             _sketch.SetMargins(50, 50);
 
-            framerate = 61.0f;
+            framerate = 60.0;
 
-            _tempo = new Tempo(framerate);
             _image = new Image(25, 25);
             _mouse = new Mouse();
             _keyboard = new Keyboard();
@@ -44,8 +44,8 @@ namespace Pad.IO.Pages
         {
             if (!(await eventListener())) return;
 
-            _tempo.start();
-            await Task.Delay(TimeSpan.FromSeconds(1.0 / (framerate * 2)));
+            await Delay.Watch(1000 / framerate);
+            //await Task.Delay(TimeSpan.FromSeconds(1.0 / (framerate * 2)));
 
             try { await _sketch.Set2DContext(_canvas._canvasReference); }
             catch (Exception) { return; };
@@ -57,7 +57,7 @@ namespace Pad.IO.Pages
             _sketch.DrawPage(6);
             _sketch.DrawMargins(1);
 
-            await _sketch.DrawText(_tempo.getActualFramerate(), 50, 200);
+            await _sketch.DrawText(measuredFramerate.ToString(), 50, 200);
             double textWidth = await _sketch.DrawText(message, 50, 70);
 
             _sketch._cursor.offset.left = 50 + (int)textWidth;
@@ -65,9 +65,6 @@ namespace Pad.IO.Pages
             _sketch.Cursor();
 
             await _sketch.Draw();
-
-            _tempo.waitConstrainFramerateLoop();
-            _tempo.stop();
 
             await InvokeAsync(() => this.StateHasChanged());
         }
@@ -99,6 +96,36 @@ namespace Pad.IO.Pages
             }
 
             return reRender;
+        }
+    }
+
+    public static class Delay
+    {
+        public static async Task Watch(double ms)
+            => await RunAsync<double>(() => WatchWait(ms));
+
+        public static double WatchWait(double ms)
+        {
+            var timer = new Stopwatch();
+            timer.Start();
+            while (timer.Elapsed.TotalMilliseconds < ms) { };
+            return 0;
+        }
+
+        public static Task<T> RunAsync<T>(Func<T> function)
+        {
+            if (function == null) throw new ArgumentNullException("function");
+            var tcs = new TaskCompletionSource<T>();
+            ThreadPool.QueueUserWorkItem(_ =>
+            {
+                try
+                {
+                    T result = function();
+                    tcs.SetResult(result);
+                }
+                catch (Exception exc) { tcs.SetException(exc); }
+            });
+            return tcs.Task;
         }
     }
 }
